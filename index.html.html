@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Ретро-часы · Франкфурт</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#151515;color:#eee;font-family:Georgia,'Times New Roman',serif;-webkit-text-size-adjust:100%}body{display:table;text-align:center}.shell{display:table-cell;vertical-align:middle;padding:24px 18px}.city{font-family:Arial,sans-serif;letter-spacing:5px;text-transform:uppercase;color:#b7a78a;font-size:15px;margin-bottom:24px}.clock{white-space:nowrap}.digit{display:inline-block;position:relative;width:17.2%;max-width:150px;height:155px;line-height:155px;margin:0 0.6%;border-radius:9px;background:linear-gradient(to bottom,#303030 0%,#292929 49.5%,#171717 50%,#222 100%);box-shadow:0 9px 0 #0c0c0c,0 15px 25px rgba(0,0,0,.55),inset 0 2px 2px rgba(255,255,255,.10);font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:110px;color:#f3e8d3;text-shadow:0 2px 1px #111;vertical-align:middle}.digit:after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:#080808;box-shadow:0 1px rgba(255,255,255,.09)}.colon{display:inline-block;font-family:Arial,sans-serif;font-size:76px;vertical-align:middle;color:#bca783;width:7%}.date{font-size:27px;margin-top:35px;color:#e4d8c4}.line{width:85px;height:1px;background:#665c4c;margin:25px auto}.weather{font-family:Arial,Helvetica,sans-serif;font-size:22px;color:#e4d8c4;min-height:30px}.weather small{display:block;color:#9e988e;font-size:13px;margin-top:11px;letter-spacing:.3px}.foot{font-family:Arial,sans-serif;font-size:12px;color:#777;margin-top:22px}.foot a{color:#b7a78a}.weather button{background:none;color:#b7a78a;border:1px solid #514c43;border-radius:5px;padding:7px 12px;font-size:13px;margin-top:9px}@media(max-width:700px){.shell{padding:12px}.digit{height:105px;line-height:105px;font-size:74px}.colon{font-size:50px}.city{margin-bottom:20px}.date{font-size:20px;margin-top:30px}.weather{font-size:18px}}@media(max-height:480px){.shell{padding:8px}.city{margin-bottom:12px}.digit{height:108px;line-height:108px;font-size:80px}.date{margin-top:20px;font-size:21px}.line{margin:15px auto}.foot{margin-top:12px}}
+</style>
+</head>
+<body><div class="shell">
+<div class="city">FRANKFURT AM MAIN</div>
+<div class="clock" aria-label="Текущее время"><span class="digit" id="h1">0</span><span class="digit" id="h2">0</span><span class="colon">:</span><span class="digit" id="m1">0</span><span class="digit" id="m2">0</span></div>
+<div class="date" id="date">Загрузка даты…</div>
+<div class="line"></div>
+<div class="weather" id="weather">Загрузка погоды…<small>Для погоды требуется интернет</small></div>
+<div class="foot">Погода: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> · Часы работают без интернета</div>
+</div>
+<script>
+(function(){
+var months=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+var days=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function pad(n){return (n<10?'0':'')+n;}
+function tick(){var d=new Date();var s=pad(d.getHours())+pad(d.getMinutes());for(var i=0;i<4;i++){document.getElementById((i<2?'h':'m')+(i%2+1)).innerHTML=s.charAt(i);}document.getElementById('date').innerHTML=days[d.getDay()]+', '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();}
+tick();setInterval(tick,1000);
+var descriptions={0:'Ясно',1:'Преимущественно ясно',2:'Переменная облачность',3:'Пасмурно',45:'Туман',48:'Туман',51:'Небольшая морось',53:'Морось',55:'Сильная морось',56:'Ледяная морось',57:'Ледяная морось',61:'Небольшой дождь',63:'Дождь',65:'Сильный дождь',66:'Ледяной дождь',67:'Ледяной дождь',71:'Небольшой снег',73:'Снег',75:'Сильный снег',77:'Снежные зёрна',80:'Ливни',81:'Ливни',82:'Сильные ливни',85:'Снегопад',86:'Сильный снегопад',95:'Гроза',96:'Гроза с градом',99:'Гроза с градом'};
+var icons={clear:'☀',cloud:'☁',rain:'☂',snow:'❄',storm:'⚡',fog:'≋'};
+function symbol(c){if(c===0||c===1)return icons.clear;if(c===2||c===3)return icons.cloud;if(c===45||c===48)return icons.fog;if(c>=71&&c<=77||c===85||c===86)return icons.snow;if(c>=95)return icons.storm;return icons.rain;}
+function updateWeather(){var el=document.getElementById('weather');var xhr=new XMLHttpRequest();var done=false;var timeout=setTimeout(function(){if(!done){done=true;xhr.abort();failed();}},12000);
+function failed(){el.innerHTML='Погода сейчас недоступна<small>Часы и дата продолжают работать без интернета</small><button id="retry" type="button">Повторить</button>';document.getElementById('retry').onclick=updateWeather;}
+xhr.onreadystatechange=function(){if(xhr.readyState===4&&!done){done=true;clearTimeout(timeout);if(xhr.status>=200&&xhr.status<300){try{var data=JSON.parse(xhr.responseText);var c=data.current.weather_code;var t=data.current.temperature_2m;var name=descriptions[c]||'Погода';el.innerHTML=symbol(c)+' &nbsp;'+Math.round(t)+'°C · '+name+'<small>Франкфурт · обновление примерно раз в 30 минут</small>';return;}catch(e){}}failed();}};
+try{xhr.open('GET','https://api.open-meteo.com/v1/forecast?latitude=50.1109&longitude=8.6821&current=temperature_2m,weather_code&timezone=Europe%2FBerlin',true);xhr.send();}catch(e){clearTimeout(timeout);failed();}}
+updateWeather();setInterval(updateWeather,30*60*1000);
+})();
+</script>
+</body></html>
